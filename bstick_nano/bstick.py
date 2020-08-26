@@ -73,7 +73,7 @@ def dynamodbReadFromTable(databaseURL, tableName):
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
         configItems = []
-        if tableName == 'cfg_nrvio_track':
+        if tableName == 'email_tracking':
             tableToRead = dynamodb.Table(tableName)
             x = tableToRead.scan()
             for i in x['Items']:
@@ -91,7 +91,7 @@ def dynamodbProvisionTable(databaseURL, tableName):
     print('dynamodbProvisionTable')
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
-        if tableName == 'cfg_nrvio_track':
+        if tableName == 'email_tracking':
             tableToProvision = dynamodb.Table(tableName)
             tableToProvision.put_item(
             Item=json.loads('{"label":"Fullest disk"}')
@@ -114,7 +114,7 @@ def dynamodbCreateTable(databaseURL, tableName):
     print('dynamodbCreateTable')
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
-        if tableName == 'cfg_nrvio_track':
+        if tableName == 'email_tracking':
             table = dynamodb.create_table(
                 TableName=tableName,
                 KeySchema=[
@@ -137,26 +137,58 @@ def dynamodbCreateTable(databaseURL, tableName):
             table.meta.client.get_waiter('table_exists').wait(TableName=tableName)
             print(table.item_count)
             response = 'Table created'
-        elif tableName == 'p7_interapp_msg':
+        elif tableName == 'p7dev_bstick':
             table = dynamodb.create_table(
                 TableName=tableName,
                 KeySchema=[
                     {
-                        'AttributeName': 'action_name',
+                        'AttributeName': 'msgId',
                         'KeyType': 'HASH'
-                    },
-                    {
-                        'AttributeName': 'action_status',
-                        'KeyType': 'RANGE'  #Sort key
-                    },
+                    }
                 ],
                 AttributeDefinitions=[
                     {
-                        'AttributeName': 'action_name',
+                        'AttributeName': 'msgId',
                         'AttributeType': 'S'
                     },
                     {
-                        'AttributeName': 'action_status',
+                        'AttributeName': 'expiry',
+                        'AttributeType': 'S'
+                    },
+                    {
+                        'AttributeName': 'origin',
+                        'AttributeType': 'S'
+                    },
+                    {
+                        'AttributeName': 'topR',
+                        'AttributeType': 'N'
+                    },
+                    {
+                        'AttributeName': 'topG',
+                        'AttributeType': 'N'
+                    },
+                    {
+                        'AttributeName': 'topB',
+                        'AttributeType': 'N'
+                    },
+                    {
+                        'AttributeName': 'bottomR',
+                        'AttributeType': 'N'
+                    },
+                    {
+                        'AttributeName': 'bottomG',
+                        'AttributeType': 'N'
+                    },
+                    {
+                        'AttributeName': 'bottomB',
+                        'AttributeType': 'N'
+                    },
+                    {
+                        'AttributeName': 'topMode',
+                        'AttributeType': 'S'
+                    },
+                    {
+                        'AttributeName': 'bottomMode',
                         'AttributeType': 'S'
                     }
                 ],
@@ -202,27 +234,28 @@ def writeDataToFile(targetFile, dataToWrite, successMsg, failureMsg, mode):
         pass
 
 # Checking DB
-# Table: cfg_nrvio_track
-# Content: A list of New Relic violations to watch after
-nrVioTrackList = []
-if dynamodbTableCheck(databaseURL, 'cfg_nrvio_track') == 'Table not found':
+# Table: p7dev_bstick
+# Content: Commands destined to be used by the BlinkStick to set it's color (RGB) and mode (on, off, blinking)
+msgList = []
+tableName = 'p7dev_bstick'
+if dynamodbTableCheck(databaseURL, tableName) == 'Table not found':
     # Table missing - creating
     print('Table missing - creating')
-    if dynamodbCreateTable(databaseURL, 'cfg_nrvio_track') == 'Table created':
+    if dynamodbCreateTable(databaseURL, tableName) == 'Table created':
         # Table created - provisioning
         print('Table created - provisioning')
-        if dynamodbProvisionTable(databaseURL, 'cfg_nrvio_track') == 'Provisioning successful':
-            nrVioTrackList = dynamodbReadFromTable(databaseURL, 'cfg_nrvio_track')
+        if dynamodbProvisionTable(databaseURL, tableName) == 'Provisioning successful':
+            msgList = dynamodbReadFromTable(databaseURL, tableName)
             print('Provisioning successful')
         else:
-            print('Provisioning of table cfg_nrvio_track failed :-(')
+            print(f'Provisioning of table {tableName} failed :-(')
     else:
-        print('Creation of table cfg_nrvio_track failed :-(')
+        print(f'Creation of table {tableName} failed :-(')
 else:
     print('')
-    nrVioTrackList = dynamodbReadFromTable(databaseURL, 'cfg_nrvio_track')
+    msgList = dynamodbReadFromTable(databaseURL, tableName)
 
-# if dynamodbDeleteTable(databaseURL, 'cfg_nrvio_track'):
+# if dynamodbDeleteTable(databaseURL, tableName):
 #     print('')
 # else:
-#     print('Table cfg_nrvio_track deletion failed :-(')
+#     print(f'Table {tableName} deletion failed :-(')
