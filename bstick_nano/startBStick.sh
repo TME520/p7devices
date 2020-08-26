@@ -8,12 +8,11 @@ export NICKNAME=''
 echo -e '\t- Credentials'
 
 echo -e '\t- Parameters...'
-export DYNAMODBURL='http://localhost:8001'
+export DYNAMODBURL='http://ec2-3-25-203-71.ap-southeast-2.compute.amazonaws.com:8001'
 export CB1DATAFOLDER='./bstick_data/'
 export LOGSFOLDER='./log/'
 export LOGFILENAME='bstick_default.log'
 export CONFIGFILE='sample_config'
-export REDISENDPOINT=''
 
 echo -e '\t- Preferences...'
 # 0 = OFF
