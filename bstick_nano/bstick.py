@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import time
 import re
@@ -7,11 +8,14 @@ import json
 import traceback
 from argparse import ArgumentParser
 from colorama import Fore, Style, init
+import redis, datetime, sys
 
-init(autoreset=True)
+endpoint = os.environ.get('REDISENDPOINT')
 
-publicname='BlinkStick'
-version='0.1'
+init(autoreset = True)
+
+publicname = 'BlinkStick'
+version = '0.1'
 
 # Path to data folder (contains ML stuff)
 cb1DataFolder = os.environ.get('CB1DATAFOLDER')
@@ -77,3 +81,15 @@ def writeDataToFile(targetFile, dataToWrite, successMsg, failureMsg, mode):
         traceback.print_exc()
         pass
 
+def prepareConn(endpoint):
+	r = redis.StrictRedis(host=endpoint, port=6379, db=0, socket_timeout=1)
+	return r
+
+try:
+    r = prepareConn(endpoint)
+    r.mset({"Croatia": "Zagreb", "Bahamas": "Nassau"})
+    r.get("Bahamas")
+except Exception as e:
+    print('[ERROR] An error occurred while talking to Redis: ', e)
+    traceback.print_exc()
+    pass

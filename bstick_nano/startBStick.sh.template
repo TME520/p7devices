@@ -2,23 +2,23 @@
 
 echo 'Setting environment variables:'
 echo -e '\t- BlinkStick instance identification'
-export NAME=''
-export NICKNAME=''
+export NAME='SED001'
+export NICKNAME='SED002'
 
 echo -e '\t- Credentials'
 
 echo -e '\t- Parameters...'
-export DYNAMODBURL='http://localhost:8001'
-export CB1DATAFOLDER='./bstick_data/'
-export LOGSFOLDER='./log/'
-export LOGFILENAME='bstick_default.log'
-export CONFIGFILE='sample_config'
-export REDISENDPOINT=''
+export DYNAMODBURL='SED003'
+export CB1DATAFOLDER='SED004'
+export LOGSFOLDER='SED005'
+export LOGFILENAME='SED006'
+export CONFIGFILE='SED007'
+export REDISENDPOINT='SED008'
 
 echo -e '\t- Preferences...'
 # 0 = OFF
 # 1 = ON
-export ENABLEBSTICK=1
+export ENABLEBSTICK=SED009
 
 echo 'Starting BlinkStick instance '$NAME' ($NICKNAME)'
 python3 ./bstick.py
