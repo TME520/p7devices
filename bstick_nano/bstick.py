@@ -110,8 +110,11 @@ def dynamodbProvisionTable(databaseURL, tableName):
             )
         elif tableName == 'p7dev_bstick':
             print('Provision p7dev_bstick')
-            tableToProvision.put_item(Item=json.loads('{"msgId":"20200827000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255"}'))
-            # tableToProvision.put_item(Item=json.loads('{"msgId":"20200827000000.000"}'))
+            tableToProvision.put_item(Item=json.loads('{"msgId":"20200827000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
+            tableToProvision.put_item(Item=json.loads('{"msgId":"20200828000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
+            tableToProvision.put_item(Item=json.loads('{"msgId":"20200829000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
+            tableToProvision.put_item(Item=json.loads('{"msgId":"20200830000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
+            tableToProvision.put_item(Item=json.loads('{"msgId":"20200831000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
         response = 'Provisioning successful'
     except Exception as e:
         print('[ERROR] Failed to create database table ' + tableName + '.\n', e)
