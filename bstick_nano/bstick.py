@@ -69,30 +69,36 @@ def dynamodbListTableItems(databaseURL, tableName):
     return response
 
 def dynamodbReadFromTable(databaseURL, tableName):
-    print('dynamodbReadFromTable')
+    print(f'dynamodbReadFromTable - databaseURL: {databaseURL} - tableName: {tableName}')
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
-        configItems = []
+        tableToRead = dynamodb.Table(tableName)
+        retrievedItems = []
         if tableName == 'email_tracking':
-            tableToRead = dynamodb.Table(tableName)
             x = tableToRead.scan()
             for i in x['Items']:
-                # print(i['label'])
-                configItems.append(i['label'])
-        response = 'Configuration data successfully loaded.'
+                print(i['label'])
+                retrievedItems.append(i['label'])
+        elif tableName == 'p7dev_bstick':
+            x = tableToRead.scan()
+            print(x)
+            for i in x['Items']:
+                print(i['expiry'])
+                retrievedItems.append(i['expiry'])
+        response = 'Data successfully loaded.'
     except Exception as e:
         print('[ERROR] Failed to load configuration data from table ' + tableName + '.\n', e)
-        response = 'Failed to load data'
+        response = 'Failed to load data.'
         traceback.print_exc()
         pass
-    return configItems
+    return retrievedItems
 
 def dynamodbProvisionTable(databaseURL, tableName):
     print('dynamodbProvisionTable')
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
+        tableToProvision = dynamodb.Table(tableName)
         if tableName == 'email_tracking':
-            tableToProvision = dynamodb.Table(tableName)
             tableToProvision.put_item(
             Item=json.loads('{"label":"Fullest disk"}')
             )
@@ -102,6 +108,10 @@ def dynamodbProvisionTable(databaseURL, tableName):
             tableToProvision.put_item(
             Item=json.loads('{"label":"Layer 7 Disk Usage"}')
             )
+        elif tableName == 'p7dev_bstick':
+            print('Provision p7dev_bstick')
+            tableToProvision.put_item(Item=json.loads('{"msgId":"20200827000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255"}'))
+            # tableToProvision.put_item(Item=json.loads('{"msgId":"20200827000000.000"}'))
         response = 'Provisioning successful'
     except Exception as e:
         print('[ERROR] Failed to create database table ' + tableName + '.\n', e)
@@ -149,46 +159,6 @@ def dynamodbCreateTable(databaseURL, tableName):
                 AttributeDefinitions=[
                     {
                         'AttributeName': 'msgId',
-                        'AttributeType': 'S'
-                    },
-                    {
-                        'AttributeName': 'expiry',
-                        'AttributeType': 'S'
-                    },
-                    {
-                        'AttributeName': 'origin',
-                        'AttributeType': 'S'
-                    },
-                    {
-                        'AttributeName': 'topR',
-                        'AttributeType': 'N'
-                    },
-                    {
-                        'AttributeName': 'topG',
-                        'AttributeType': 'N'
-                    },
-                    {
-                        'AttributeName': 'topB',
-                        'AttributeType': 'N'
-                    },
-                    {
-                        'AttributeName': 'bottomR',
-                        'AttributeType': 'N'
-                    },
-                    {
-                        'AttributeName': 'bottomG',
-                        'AttributeType': 'N'
-                    },
-                    {
-                        'AttributeName': 'bottomB',
-                        'AttributeType': 'N'
-                    },
-                    {
-                        'AttributeName': 'topMode',
-                        'AttributeType': 'S'
-                    },
-                    {
-                        'AttributeName': 'bottomMode',
                         'AttributeType': 'S'
                     }
                 ],
@@ -255,7 +225,7 @@ else:
     print('')
     msgList = dynamodbReadFromTable(databaseURL, tableName)
 
-# if dynamodbDeleteTable(databaseURL, tableName):
-#     print('')
-# else:
-#     print(f'Table {tableName} deletion failed :-(')
+if dynamodbDeleteTable(databaseURL, tableName):
+    print('')
+else:
+    print(f'Table {tableName} deletion failed :-(')
