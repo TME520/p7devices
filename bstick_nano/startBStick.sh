@@ -2,8 +2,8 @@
 
 echo 'Setting environment variables:'
 echo -e '\t- BlinkStick instance identification'
-export NAME=''
-export NICKNAME=''
+export NAME='Barbon'
+export NICKNAME='Barb'
 
 echo -e '\t- Credentials'
 

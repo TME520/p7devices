@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
 import time
+import datetime
+from datetime import date, timedelta
 import re
 import urllib.request
 import urllib.parse
@@ -15,7 +17,8 @@ databaseURL = os.environ.get('DYNAMODBURL')
 
 init(autoreset = True)
 
-publicname = 'BlinkStick'
+publicname = os.environ.get('NAME')
+nickname = os.environ.get('NICKNAME')
 version = '0.1'
 
 # Path to data folder (contains ML stuff)
@@ -93,7 +96,7 @@ def dynamodbReadFromTable(databaseURL, tableName):
         pass
     return retrievedItems
 
-def dynamodbProvisionTable(databaseURL, tableName):
+def dynamodbProvisionTable(databaseURL, tableName, dataToInsert):
     print('dynamodbProvisionTable')
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
@@ -110,11 +113,7 @@ def dynamodbProvisionTable(databaseURL, tableName):
             )
         elif tableName == 'p7dev_bstick':
             print('Provision p7dev_bstick')
-            tableToProvision.put_item(Item=json.loads('{"msgId":"20200827000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
-            tableToProvision.put_item(Item=json.loads('{"msgId":"20200828000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
-            tableToProvision.put_item(Item=json.loads('{"msgId":"20200829000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
-            tableToProvision.put_item(Item=json.loads('{"msgId":"20200830000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
-            tableToProvision.put_item(Item=json.loads('{"msgId":"20200831000000.000","expiry":"20200828000000","origin":"protocol7","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'))
+            tableToProvision.put_item(Item=json.loads(dataToInsert))
         response = 'Provisioning successful'
     except Exception as e:
         print('[ERROR] Failed to create database table ' + tableName + '.\n', e)
@@ -209,26 +208,39 @@ def writeDataToFile(targetFile, dataToWrite, successMsg, failureMsg, mode):
 # Checking DB
 # Table: p7dev_bstick
 # Content: Commands destined to be used by the BlinkStick to set it's color (RGB) and mode (on, off, blinking)
-msgList = []
 tableName = 'p7dev_bstick'
 if dynamodbTableCheck(databaseURL, tableName) == 'Table not found':
     # Table missing - creating
     print('Table missing - creating')
     if dynamodbCreateTable(databaseURL, tableName) == 'Table created':
-        # Table created - provisioning
-        print('Table created - provisioning')
-        if dynamodbProvisionTable(databaseURL, tableName) == 'Provisioning successful':
-            msgList = dynamodbReadFromTable(databaseURL, tableName)
-            print('Provisioning successful')
-        else:
-            print(f'Provisioning of table {tableName} failed :-(')
+        print(f'Creation of table {tableName} succeeded.')
     else:
         print(f'Creation of table {tableName} failed :-(')
 else:
     print('')
     msgList = dynamodbReadFromTable(databaseURL, tableName)
 
-if dynamodbDeleteTable(databaseURL, tableName):
+print(Fore.RED + '################')
+print(Fore.RED + '#  BlinkStick  #')
+print(Fore.RED + '################')
+print(Fore.GREEN + '')
+
+currentDT = datetime.datetime.now()
+ISOTStamp = currentDT.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+tomorrow = date.today() + timedelta(days=1)
+cmdExpiry = tomorrow.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+cmdOrigin = publicname
+dataToInsert = '{"msgId":"' + ISOTStamp + '","expiry":"' + cmdExpiry + '","origin":"' + publicname + '","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'
+msgList = []
+tableName = 'p7dev_bstick'
+
+if dynamodbProvisionTable(databaseURL, tableName, dataToInsert) == 'Provisioning successful':
+    msgList = dynamodbReadFromTable(databaseURL, tableName)
+    print('Provisioning successful')
+
+print(f'msgList: {msgList}')
+
+if dynamodbDeleteTable(databaseURL, 'p7dev_bstick'):
     print('')
 else:
-    print(f'Table {tableName} deletion failed :-(')
+    print('Table p7dev_bstick deletion failed :-(')
