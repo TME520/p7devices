@@ -13,6 +13,7 @@ export CB1DATAFOLDER='SED004'
 export LOGSFOLDER='SED005'
 export LOGFILENAME='SED006'
 export CONFIGFILE='SED007'
+export P7INSTANCEID='SED009'
 
 echo -e '\t- Preferences...'
 # 0 = OFF

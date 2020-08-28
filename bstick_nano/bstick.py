@@ -13,12 +13,19 @@ from colorama import Fore, Style, init
 import boto3
 from botocore.exceptions import ClientError
 
-databaseURL = os.environ.get('DYNAMODBURL')
+try:
+    from blinkstick import blinkstick
+except ImportError:
+    print('Cannot import blinkstick. Run: pip3 install blinkstick')
+    pass
 
 init(autoreset = True)
 
 publicname = os.environ.get('NAME')
 nickname = os.environ.get('NICKNAME')
+databaseURL = os.environ.get('DYNAMODBURL')
+p7server = os.environ.get('P7INSTANCEID')
+enableLocalBStick = os.environ.get('ENABLEBSTICK')
 version = '0.1'
 
 # Path to data folder (contains ML stuff)
@@ -71,7 +78,7 @@ def dynamodbListTableItems(databaseURL, tableName):
         pass
     return response
 
-def dynamodbReadFromTable(databaseURL, tableName):
+def dynamodbReadFromTable(databaseURL, tableName, p7server):
     print(f'dynamodbReadFromTable - databaseURL: {databaseURL} - tableName: {tableName}')
     try:
         dynamodb = boto3.resource('dynamodb', endpoint_url=databaseURL)
@@ -82,19 +89,28 @@ def dynamodbReadFromTable(databaseURL, tableName):
             for i in x['Items']:
                 print(i['label'])
                 retrievedItems.append(i['label'])
+            return retrievedItems
         elif tableName == 'p7dev_bstick':
             x = tableToRead.scan()
             print(x)
             for i in x['Items']:
-                print(i['expiry'])
-                retrievedItems.append(i['expiry'])
+                if i['origin'] == p7server:
+                    print(i['origin'])
+                    tR = i['tR']
+                    tG = i['tG']
+                    tB = i['tB']
+                    bR = i['bR']
+                    bG = i['bG']
+                    bB = i['bB']
+                    topMode = i['topMode']
+                    bottomMode = i['bottomMode']
+            return tR, tG, tB, bR, bG, bB, topMode, bottomMode
         response = 'Data successfully loaded.'
     except Exception as e:
         print('[ERROR] Failed to load configuration data from table ' + tableName + '.\n', e)
         response = 'Failed to load data.'
         traceback.print_exc()
         pass
-    return retrievedItems
 
 def dynamodbProvisionTable(databaseURL, tableName, dataToInsert):
     print('dynamodbProvisionTable')
@@ -180,7 +196,7 @@ def dynamodbCreateTable(databaseURL, tableName):
     return response
 
 def dynamodbTableCheck(databaseURL, tableName):
-    print('dynamodbTableCheck')
+    print(f'dynamodbTableCheck - databaseURL: {databaseURL}, tableName: {tableName}')
     try:
         dynamodb = boto3.client('dynamodb', endpoint_url=databaseURL)
         response = dynamodb.describe_table(TableName=tableName)
@@ -205,27 +221,75 @@ def writeDataToFile(targetFile, dataToWrite, successMsg, failureMsg, mode):
         traceback.print_exc()
         pass
 
+def update_local_bstick_nano(tR, tG, tB, bR, bG, bB, topMode, bottomMode, enableLocalBStick):
+    # This function drives the local BlinkStick Nano (two LEDs, one on each side)
+    if enableLocalBStick == '1':
+        try:
+            if topMode == 'on':
+                for bstick in blinkstick.find_all():
+                    bstick.set_color(channel=0, index=0, red=int(tR), green=int(tG), blue=int(tB))
+                time.sleep(0.1)
+                bstickStatus = topMode
+            elif topMode == 'flash':
+                for bstick in blinkstick.find_all():
+                    bstick.blink(channel=0, index=0, red=int(tR), green=int(tG), blue=int(tB), repeats=1, delay=500)
+                time.sleep(0.1)
+                bstickStatus = topMode
+            elif topMode == 'off':
+                for bstick in blinkstick.find_all():
+                    bstick.set_color(channel=0, index=0, red=0, green=0, blue=0)
+            if bottomMode == 'on':
+                for bstick in blinkstick.find_all():
+                    bstick.set_color(channel=0, index=1, red=int(bR), green=int(bG), blue=int(bB))
+                time.sleep(0.1)
+                bstickStatus = topMode
+            elif bottomMode == 'flash':
+                for bstick in blinkstick.find_all():
+                    bstick.blink(channel=0, index=1, red=int(bR), green=int(bG), blue=int(bB), repeats=1, delay=500)
+                time.sleep(0.1)
+                bstickStatus = topMode
+            elif bottomMode == 'off':
+                bstick.set_color(channel=0, index=1, red=0, green=0, blue=0)
+        except Exception as e:
+            print('[ERROR] Failed to update local Blinkstick color.\n', e)
+            bstickStatus = 'unknown'
+            traceback.print_exc()
+            pass
+    else:
+        bstickStatus = 'disabled'
+        for bstick in blinkstick.find_all():
+            bstick.turn_off()
+    return bstickStatus
+
+bstickStatus = 'empty'
+bstickParams = []
+shortWait = 2
+
 # Checking DB
 # Table: p7dev_bstick
 # Content: Commands destined to be used by the BlinkStick to set it's color (RGB) and mode (on, off, blinking)
+print('Checking Protocol/7 server connection...')
 tableName = 'p7dev_bstick'
 if dynamodbTableCheck(databaseURL, tableName) == 'Table not found':
     # Table missing - creating
     print('Table missing - creating')
     if dynamodbCreateTable(databaseURL, tableName) == 'Table created':
         print(f'Creation of table {tableName} succeeded.')
+        print('...success.')
     else:
         print(f'Creation of table {tableName} failed :-(')
+        print('...failure.')
 else:
-    print('')
-    msgList = dynamodbReadFromTable(databaseURL, tableName)
+    print('...success.')
+    
 
 print(Fore.RED + '################')
 print(Fore.RED + '#  BlinkStick  #')
 print(Fore.RED + '################')
 print(Fore.GREEN + '')
 
-# if dynamodbDeleteTable(databaseURL, 'p7dev_bstick'):
-#     print('')
-# else:
-#     print('Table p7dev_bstick deletion failed :-(')
+while True:
+    tR, tG, tB, bR, bG, bB, topMode, bottomMode = dynamodbReadFromTable(databaseURL, tableName, p7server)
+    print(f'tR: {tR}, tG: {tG}, tB: {tB}, bR: {bR}, bG: {bG}, bB: {bB}, topMode: {topMode}, bottomMode: {bottomMode}')
+    update_local_bstick_nano(tR, tG, tB, bR, bG, bB, topMode, bottomMode, enableLocalBStick)
+    time.sleep(shortWait)
