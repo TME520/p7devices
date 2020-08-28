@@ -225,22 +225,7 @@ print(Fore.RED + '#  BlinkStick  #')
 print(Fore.RED + '################')
 print(Fore.GREEN + '')
 
-currentDT = datetime.datetime.now()
-ISOTStamp = currentDT.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-tomorrow = date.today() + timedelta(days=1)
-cmdExpiry = tomorrow.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-cmdOrigin = publicname
-dataToInsert = '{"msgId":"' + ISOTStamp + '","expiry":"' + cmdExpiry + '","origin":"' + publicname + '","tR":"255","tG":"255","tB":"255","bR":"0","bG":"0","bB":"0","topMode":"on","bottomMode":"off"}'
-msgList = []
-tableName = 'p7dev_bstick'
-
-if dynamodbProvisionTable(databaseURL, tableName, dataToInsert) == 'Provisioning successful':
-    msgList = dynamodbReadFromTable(databaseURL, tableName)
-    print('Provisioning successful')
-
-print(f'msgList: {msgList}')
-
-if dynamodbDeleteTable(databaseURL, 'p7dev_bstick'):
-    print('')
-else:
-    print('Table p7dev_bstick deletion failed :-(')
+# if dynamodbDeleteTable(databaseURL, 'p7dev_bstick'):
+#     print('')
+# else:
+#     print('Table p7dev_bstick deletion failed :-(')
