@@ -6,6 +6,8 @@ This repository contains code related to devices that can be controlled by [Prot
 
 Protocol/7 can control one or more BlinkStick USB RGB LED light. The models currently supported are [BlinkStick Nano](https://www.blinkstick.com/products/blinkstick-nano) and [BlinkStick Flex](https://www.blinkstick.com/products/blinkstick-flex).
 
+![The BlinkStick Nano in action](p7devices_bstick_nano01.png)
+
 ### Installation
 
 1. You need to have a [Protocol/7](https://github.com/TME520/protocol7) server running,
@@ -62,5 +64,22 @@ Use `lsusb` in order to get idVendor and idProduct.
 2. Make sure the [Protocol/7](https://github.com/TME520/protocol7) server is running,
 3. Go to `./p7devices/bstick_nano/`
 4. Run `$ ./startBStick.sh`
+
+### Colors and their meaning
+
+The BlinkStick Nano has two RGB LEDs, one on each side. Their color can be programmed independantly.
+In our case, the BlinkStick client queries the message queue every 2 seconds.
+
+|Top LED color|Bottom LED color|Meaning|
+|---|---|---|
+|GREEN|GREEN|All clear|
+|BLUE (blinking)|GREEN|Protocol/7 is waiting for next cycle to begin|
+|off|BLUE|Protocol/7 is starting|
+|GREEN|BLUE|Protocol/7 is refreshing its data (new cycle). All is good.|
+|ORANGE/RED|BLUE|Protocol/7 is refreshing its data, previous test cycles revealed issues with the services being monitored.|
+|ORANGE|ORANGE|An incident just started on one or more of the monitored services.|
+|RED|RED|There is a confirmed incident on one or more of the monitored services.|
+|WHITE|Any color|Protocol/7 has a network connectivity issue.|
+|PINK|Any color|Protocol/7 could not call the monitored URL because of expired credentials.|
 
 ## Ex-Anki / Digital Dream Labs Cozmo robot
