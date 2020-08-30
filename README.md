@@ -83,3 +83,24 @@ In our case, the BlinkStick client queries the message queue every 2 seconds.
 |PINK|Any color|Protocol/7 could not call the monitored URL because of expired credentials.|
 
 ## Ex-Anki / Digital Dream Labs Cozmo robot
+
+### Installation
+
+#### Android Debug Bridge
+
+```
+$ cd $HOME/Downloads
+$ wget https://dl.google.com/android/repository/platform-tools-latest-linux.zip
+$ unzip ./platform-tools-latest-linux.zip
+$ mkdir android-sdk-linux
+$ mv ./platform-tools android-sdk-linux
+$ cd android-sdk-linux/platform-tools
+$ ls adb
+$ mv /home/tme520/Downloads/android-sdk-linux/ /home/tme520/
+$ vi ~/.bashrc
+```
+`export PATH=${PATH}:~/android-sdk-linux/platform-tools`
+```
+$ source ~/.bashrc
+$ which adb
+```
