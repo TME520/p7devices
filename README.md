@@ -12,6 +12,10 @@ Protocol/7 can control one or more BlinkStick USB RGB LED light. The models curr
 2. You then need to clone the [p7devices](https://github.com/TME520/p7devices) repository locally,
 3. Configure your local instance of p7devices:
 
+The configuration information is made available in the *Outputs* tab of the Cloudformation deployment for your Protocol/7 stack:
+
+![Protocol/7 configuration information](p7devices_config_info01.png)
+
 `$ vi startBStick.sh`
 ```
 #!/bin/bash
